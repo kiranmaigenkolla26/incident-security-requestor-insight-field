@@ -1,0 +1,42 @@
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.component.ComponentAccessor
+
+import com.onresolve.scriptrunner.runner.customisers.WithPlugin
+import com.onresolve.scriptrunner.runner.customisers.PluginModule
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectTypeFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectTypeAttributeFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade
+
+@WithPlugin('com.riadalabs.jira.plugins.insight')
+@PluginModule ObjectFacade objectFacade
+@PluginModule ObjectTypeFacade objectTypeFacade
+@PluginModule ObjectTypeAttributeFacade objectTypeAttributeFacade
+@PluginModule IQLFacade iqlFacade
+
+def bu = getFieldById("customfield_14906")
+def subBu = getFieldById("customfield_14907")
+
+//if("Create".equals(actionName)) {
+    def requestor = getFieldById("customfield_15000")
+    String requestorEmail = ""
+    
+    bu?.setFormValue("")
+	subBu?.setFormValue("")
+
+    def serviceAccount = ComponentAccessor.userManager.getUserByName('jiraAdminQA')
+    def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+    requestorEmail = currentUser.getEmailAddress() 
+    requestor.setDescription("${serviceAccount.getEmailAddress()}")
+    ComponentAccessor.jiraAuthenticationContext.setLoggedInUser(serviceAccount)
+    try {  
+        def insightUserObj = iqlFacade.findObjectsByIQLAndSchema(25,'"Email Address" IN ("' + requestorEmail + '") AND objectType IN ("Users")')
+        requestor.setFormValue(insightUserObj[0].getObjectKey())
+    } finally {   
+        ComponentAccessor.jiraAuthenticationContext.setLoggedInUser(currentUser)
+    }        
+//}
+
+bu.setReadOnly(true)
+subBu.setReadOnly(true)
+
