@@ -15,8 +15,8 @@ import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade
 
 
 def userManager = ComponentAccessor.getUserManager()
-def bu = getFieldById("customfield_14600")
-def subBu = getFieldById("customfield_14601")
+def bu = getFieldById("customfield_14906")
+def subBu = getFieldById("customfield_14907")
 
 String requestor = getFieldById(getFieldChanged()).getValue() as String
 
