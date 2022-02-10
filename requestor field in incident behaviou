@@ -1,0 +1,47 @@
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.component.ComponentAccessor
+import com.onresolve.scriptrunner.runner.customisers.WithPlugin
+import com.onresolve.scriptrunner.runner.customisers.PluginModule
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectTypeFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectTypeAttributeFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade
+
+@WithPlugin('com.riadalabs.jira.plugins.insight')
+@PluginModule ObjectFacade objectFacade
+@PluginModule ObjectTypeFacade objectTypeFacade
+@PluginModule ObjectTypeAttributeFacade objectTypeAttributeFacade
+@PluginModule IQLFacade iqlFacade
+
+
+def userManager = ComponentAccessor.getUserManager()
+def bu = getFieldById("customfield_14600")
+def subBu = getFieldById("customfield_14601")
+
+String requestor = getFieldById(getFieldChanged()).getValue() as String
+
+def insightUserObjBU=null
+def insightUserObjSUBBU=null
+def buName=null
+def subBuName=null
+def buObj=null
+def subBuObj =null
+
+def insightUserObj = iqlFacade.findObjectsByIQLAndSchema(25,'"Key" IN ("' + requestor + '") AND objectType IN ("Users")')
+
+insightUserObjBU = objectFacade.loadObjectAttributeBean(insightUserObj[0].getId(), "Business Unit")
+insightUserObjSUBBU = objectFacade.loadObjectAttributeBean(insightUserObj[0].getId(), "Sub Business Unit")
+if(insightUserObjBU) {
+    bu?.setFormValue(insightUserObjBU.getObjectAttributeValueBeans()[0].getValue() as String)
+} else {
+    bu?.setFormValue("")
+}
+
+if(insightUserObjSUBBU) {
+	subBu?.setFormValue(insightUserObjSUBBU.getObjectAttributeValueBeans()[0].getValue() as String)
+} else {
+    subBu?.setFormValue("")  
+}
+
+bu.setReadOnly(true)
+subBu.setReadOnly(true)
