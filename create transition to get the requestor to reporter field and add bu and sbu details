@@ -1,0 +1,40 @@
+import com.atlassian.jira.issue.CustomFieldManager
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.user.ApplicationUser
+
+import com.onresolve.scriptrunner.runner.customisers.WithPlugin
+import com.onresolve.scriptrunner.runner.customisers.PluginModule
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectTypeFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectTypeAttributeFacade
+import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade
+import com.riadalabs.jira.plugins.insight.services.model.ObjectBean
+
+@WithPlugin('com.riadalabs.jira.plugins.insight')
+@PluginModule ObjectFacade objectFacade
+
+
+//def issue = ComponentAccessor.getIssueManager().getIssueObject("IT-41716")
+def requestorCF = ComponentAccessor.getCustomFieldManager().getCustomFieldObjectsByName("Requestor")[0];
+List objects = issue.getCustomFieldValue(requestorCF) as List
+
+def emailAddress = objectFacade.loadObjectAttributeBean(objects[0].getId(), "Email Address")
+def insightUserObjBU = objectFacade.loadObjectAttributeBean(objects[0].getId(), "Business Unit")
+def insightUserObjSUBBU = objectFacade.loadObjectAttributeBean(objects[0].getId(), "Sub Business Unit")
+
+String emailAddressVal = emailAddress.getObjectAttributeValueBeans()[0].getValue()
+
+List users = ComponentAccessor.userSearchService.findUsersByEmail(emailAddressVal) as List
+if(users != null && users.isEmpty() == false) {
+    issue.setReporter(users.get(0))
+}
+def rbuCF = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(14600l)
+def rsbuCF = ComponentAccessor.getCustomFieldManager().getCustomFieldObject(14601l)
+
+if(insightUserObjBU) {
+    issue.setCustomFieldValue(rbuCF, insightUserObjBU.getObjectAttributeValueBeans()[0].getValue())
+}
+
+if(insightUserObjSUBBU) {
+	issue.setCustomFieldValue(rsbuCF, insightUserObjSUBBU.getObjectAttributeValueBeans()[0].getValue())
+}
